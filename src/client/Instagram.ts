@@ -156,8 +156,74 @@ async function interactWithPosts(page: any) {
             // Если не удалось найти кнопку с помощью обычных селекторов,
             // используем JavaScript для поиска и клика по кнопке
             if (!likeButton) {
-                console.log(`Используем JavaScript для поиска кнопки лайка...`);
+                console.log(`Используем альтернативные методы для поиска и нажатия кнопки лайка...`);
                 
+                // Метод 1: Попытка использовать page.click() напрямую с более специфичными селекторами
+                const specificSelectors = [
+                    `${postSelector} article div:nth-child(1) section:nth-child(1) span:nth-child(1) button`,
+                    `${postSelector} section span button`, // Часто встречается в Instagram
+                    `${postSelector} section span:first-child button`, // Первая кнопка в секции обычно лайк
+                    `${postSelector} section:last-child span:first-child button`,
+                    `${postSelector} div[role="button"]:has(svg)` // Новый селектор для поиска кнопок с SVG внутри
+                ];
+                
+                for (const selector of specificSelectors) {
+                    try {
+                        const element = await page.$(selector);
+                        if (element) {
+                            // Случайная задержка перед кликом (400-900 мс)
+                            await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 500) + 400));
+                            
+                            // Используем метод mousedown/mouseup вместо простого клика - более надежно в Instagram
+                            await element.evaluate((el: HTMLElement) => {
+                                // Добавляем небольшую случайность в позиции клика
+                                const rect = el.getBoundingClientRect();
+                                const x = rect.left + rect.width * (0.5 + (Math.random() * 0.3 - 0.15)); // Случайное отклонение от центра на ±15%
+                                const y = rect.top + rect.height * (0.5 + (Math.random() * 0.3 - 0.15));
+
+                                // Создаем mousedown событие
+                                const mousedownEvent = new MouseEvent('mousedown', {
+                                    bubbles: true,
+                                    cancelable: true,
+                                    view: window,
+                                    clientX: x,
+                                    clientY: y
+                                });
+                                el.dispatchEvent(mousedownEvent);
+
+                                // Небольшая задержка между нажатием и отпусканием (10-80 мс)
+                                setTimeout(() => {
+                                    // Создаем mouseup событие
+                                    const mouseupEvent = new MouseEvent('mouseup', {
+                                        bubbles: true,
+                                        cancelable: true,
+                                        view: window,
+                                        clientX: x,
+                                        clientY: y
+                                    });
+                                    el.dispatchEvent(mouseupEvent);
+                                    
+                                    // И, наконец, событие клика
+                                    const clickEvent = new MouseEvent('click', {
+                                        bubbles: true,
+                                        cancelable: true,
+                                        view: window,
+                                        clientX: x,
+                                        clientY: y
+                                    });
+                                    el.dispatchEvent(clickEvent);
+                                }, Math.floor(Math.random() * 70) + 10);
+                            });
+                            
+                            console.log(`Пост ${postIndex} лайкнут с помощью реалистичного клика по селектору: ${selector}`);
+                            return; // Выходим из цикла, если успешно нашли и нажали на кнопку
+                        }
+                    } catch (error: unknown) {
+                        console.log(`Ошибка при попытке клика по селектору ${selector}: ${error instanceof Error ? error.message : String(error)}`);
+                    }
+                }
+                
+                // Метод 2: Если первый метод не удался, используем поиск через JavaScript
                 const likeButtonFound = await page.evaluate((postSel: string) => {
                     try {
                         // Находим сам пост
@@ -264,13 +330,74 @@ async function interactWithPosts(page: any) {
                     // Случайная пауза перед нажатием (300-800 мс)
                     await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 500) + 300));
                     
-                    console.log(`Лайкаем пост ${postIndex}...`);
+                    console.log(`Лайкаем пост ${postIndex} с эмуляцией движения мыши...`);
                     try {
-                        // Имитация человеческого клика с задержкой между нажатием и отпусканием
-                        await likeButton.click({ delay: Math.floor(Math.random() * 50) + 30 });
-                        console.log(`Пост ${postIndex} успешно лайкнут.`);
+                        // Перед взаимодействием повторно получаем свежую ссылку на селектор кнопки
+                        // Это помогает в случае, если DOM изменился между поиском и действием
+                        const freshLikeButton = await page.$(`${postSelector} svg[aria-label="Like"], ${postSelector} svg[aria-label="Нравится"]`);
+                        if (!freshLikeButton) {
+                            throw new Error('Кнопка лайка исчезла перед взаимодействием');
+                        }
+                        
+                        // Добавляем небольшую задержку для стабилизации DOM
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        
+                        // Получаем координаты элемента
+                        const boundingBox = await freshLikeButton.boundingBox();
+                        if (!boundingBox) {
+                            throw new Error('Не удалось получить координаты элемента');
+                        }
+
+                        // Вычисляем центр с небольшим случайным смещением
+                        const centerX = boundingBox.x + boundingBox.width / 2 + (Math.random() * 10 - 5);
+                        const centerY = boundingBox.y + boundingBox.height / 2 + (Math.random() * 10 - 5);
+
+                        // 1. Сначала плавно перемещаем мышь к элементу (human-like движение)
+                        await page.mouse.move(centerX - 100, centerY - 100, { steps: 10 }); // Начинаем с позиции слева сверху
+                        await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 100) + 50)); // Небольшая задержка
+
+                        // 2. Плавно двигаемся к точке назначения с небольшими движениями по кривой
+                        // Имитируем человеческое движение с немного изогнутой траекторией
+                        const controlPoints = [
+                            { x: centerX - 50, y: centerY - 70 },
+                            { x: centerX - 25, y: centerY - 40 },
+                            { x: centerX - 5, y: centerY - 15 },
+                            { x: centerX, y: centerY }
+                        ];
+
+                        for (let i = 0; i < controlPoints.length; i++) {
+                            await page.mouse.move(controlPoints[i].x, controlPoints[i].y, { steps: 5 });
+                            await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 30) + 20));
+                        }
+
+                        // 3. Еще небольшая задержка перед кликом, как будто человек решает, кликать или нет
+                        await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 300) + 100));
+
+                        // 4. Нажимаем левую кнопку мыши и удерживаем ее случайное время
+                        await page.mouse.down();
+                        await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 80) + 30)); // Задержка 30-110 мс
+
+                        // 5. Отпускаем кнопку
+                        await page.mouse.up();
+
+                        // 6. Ждем немного, имитируя послекликовое поведение
+                        await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 200) + 100));
+                        
+                        // 7. Отводим мышь в сторону (как будто переходим к следующему действию)
+                        await page.mouse.move(centerX + 100, centerY + 50, { steps: 5 });
+
+                        console.log(`Пост ${postIndex} успешно лайкнут с полной эмуляцией движения мыши.`);
                     } catch (error: unknown) {
                         console.log(`Ошибка при нажатии на кнопку лайка: ${error instanceof Error ? error.message : String(error)}`);
+                        
+                        // В случае ошибки пробуем запасной способ - напрямую через клик без движения
+                        try {
+                            console.log(`Пробуем запасной способ лайка...`);
+                            await likeButton.click({ delay: Math.floor(Math.random() * 50) + 50, force: true });
+                            console.log(`Пост ${postIndex} лайкнут запасным способом.`);
+                        } catch (backupError: unknown) {
+                            console.log(`И запасной способ не сработал: ${backupError instanceof Error ? backupError.message : String(backupError)}`);
+                        }
                     }
                 } else if (ariaLabel === "Unlike" || ariaLabel === "Не нравится") {
                     console.log(`Пост ${postIndex} уже лайкнут.`);
@@ -307,9 +434,9 @@ async function interactWithPosts(page: any) {
                 caption = expandedCaption; // Update caption with expanded content
             }
 
-            // Комментируем пост только если достаточно текста в подписи (минимум 100 символов)
-            if (!caption || caption.trim() === '' || caption.trim().length < 100) {
-                console.log(`Пропускаем комментарий для поста ${postIndex} - текст слишком короткий (${caption ? caption.trim().length : 0} символов, нужно минимум 100)`);
+            // Комментируем пост только если достаточно текста в подписи (минимум 50 символов)
+            if (!caption || caption.trim() === '' || caption.trim().length < 50) {
+                console.log(`Пропускаем комментарий для поста ${postIndex} - текст слишком короткий (${caption ? caption.trim().length : 0} символов, нужно минимум 50)`);
             } else {
                 // Добавляем случайную паузу перед комментированием (800-1800 мс)
                 await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 1000) + 800));
