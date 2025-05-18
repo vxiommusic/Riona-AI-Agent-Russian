@@ -185,13 +185,13 @@ async function interactWithPosts(page: any) {
                     promptTemplate = `Напиши вдумчивый, интересный и зрелый ответ на следующий пост: "${caption}". 
                     Убедись, что ответ актуален, содержателен и добавляет ценность беседе. 
                     Он должен отражать эмпатию и профессионализм, избегая слишком casual или поверхностного тона. 
-                    Ответ должен быть не более 300 символов и не нарушать стандарты сообщества Instagram относительно спама. 
+                    Ответ должен быть не более 200 символов и не нарушать стандарты сообщества Instagram относительно спама. 
                     Постарайся сделать ответ максимально похожим на естественный человеческий комментарий на русском языке.`;
                 } else {
                     promptTemplate = `Craft a thoughtful, engaging, and mature reply to the following post: "${caption}". 
                     Ensure the reply is relevant, insightful, and adds value to the conversation. 
                     It should reflect empathy and professionalism, and avoid sounding too casual or superficial. 
-                    The reply should be 300 characters or less and not go against Instagram Community Standards on spam. 
+                    The reply should be 200 characters or less and not go against Instagram Community Standards on spam. 
                     Try your best to humanize the reply and make it sound natural.`;
                 }
                 
@@ -253,7 +253,8 @@ async function interactWithPosts(page: any) {
                 }
                 
                 // Убираем потенциально проблемные символы из комментария
-                comment = comment.replace(/[^\x20-\x7E\s]/g, ''); // Оставляем только безопасные ASCII символы
+                // Сохраняем латинские и кириллические символы, удаляем только потенциально опасные символы
+                comment = comment.replace(/[^\x20-\x7E\u0400-\u04FF\s]/g, ''); // Сохраняем ASCII и кириллицу
                 comment = comment.substring(0, 200); // Ограничиваем длину комментария
                 console.log(`Generated comment: ${comment}`);
                 try {
