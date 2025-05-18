@@ -1,95 +1,108 @@
-## Riona-AI-Agent 🌸
+## Riona-AI-Agent 🌸 (Русская версия)
 
-Riona-AI-Agent is an AI-powered automation tool designed to interact with various social media platforms like Instagram, Twitter, and GitHub. It leverages advanced AI models to generate engaging content, automate interactions, and manage social media accounts efficiently.
+Riona-AI-Agent - это инструмент автоматизации на базе искусственного интеллекта, разработанный для взаимодействия с различными социальными платформами, такими как Instagram, Twitter и GitHub. Он использует продвинутые модели ИИ для генерации интересного контента, автоматизации взаимодействий и эффективного управления аккаунтами в социальных сетях.
 
+**Важно**: Данный репозиторий является русской веткой оригинального проекта Riona-AI-Agent с дополнительными улучшениями для русскоязычных пользователей. Мы оптимизировали работу агента для корректного взаимодействия с русскоязычным контентом.
 
-Before using the automation features, you can train the agent character with personalized content. You can upload your content through any of the following:
+Перед использованием функций автоматизации вы можете обучить агента персонализированным контентом. Вы можете загрузить свой контент через любой из следующих источников:
 
-- **YouTube Video URL** 🎥
-- **Audio File** 🎙️
-- **Portfolio or Website Link** 🌐
-- **File Formats Supported**: PDF, DOC, DOCX, TXT 📄
+- **Ссылка на YouTube видео** 🎥
+- **Аудио файл** 🎙️
+- **Портфолио или ссылка на веб-сайт** 🌐
+- **Поддерживаемые форматы файлов**: PDF, DOC, DOCX, TXT 📄
 
-## Features
+## Возможности
 
-- **Instagram Automation**: Automatically log in, like posts, and leave thoughtful comments.
-- **Twitter Automation**: (Coming soon) Automatically tweet, retweet, and like tweets.
-- **GitHub Automation**: (Coming soon) Automatically manage repositories, issues, and pull requests.
-- **AI-Powered Content Generation**: Use Google Generative AI to generate engaging comments and posts.
-- **Proxy Support**: Use proxies to manage multiple accounts and avoid rate limits.
-- **Cookie Management**: Save and load cookies to maintain sessions across restarts.
+- **Автоматизация Instagram**: Автоматический вход, лайки постов и оставление продуманных комментариев.
+- **Автоматизация Twitter**: (Скоро) Автоматические твиты, ретвиты и лайки твитов.
+- **Автоматизация GitHub**: (Скоро) Автоматическое управление репозиториями, задачами и пул-реквестами.
+- **Генерация контента на основе ИИ**: Использование Google Generative AI для создания привлекательных комментариев и постов.
+- **Поддержка прокси**: Использование прокси для управления несколькими аккаунтами и избежания ограничений по частоте запросов.
+- **Управление cookies**: Сохранение и загрузка cookies для поддержания сессий при перезапусках.
 
-## Installation
+## Установка
 
-1. **Clone the repository**:
+1. **Клонировать репозиторий**:
     ```sh
-    git clone https://github.com/david-patrick-chuks/Riona-AI-Agent.git
-    cd Riona-AI-Agent
+    git clone https://github.com/blockchain-src/Riona-AI-Agent-.git
+    cd Riona-AI-Agent-
     ```
 
-2. **Install dependencies**:
+2. **Установить зависимости**:
     ```sh
     npm install
     ```
 
-3. **Set up environment variables**:
-    rename the [.env.example](http://_vscodecontentref_/1) file to  [.env](http://_vscodecontentref_/1)  file in the root directory and add your credentials and API keys (optional). Refer to the [.env.example](http://_vscodecontentref_/2) file for the required variables.
+3. **Настроить переменные окружения**:
+    Переименуйте файл `.env.example` в `.env` в корневой директории и добавьте ваши учетные данные и API ключи. Обратитесь к файлу `.env.example` для ознакомления с необходимыми переменными.
     ```dotenv
-    # Instagram credentials
-    IGusername=your_instagram_username
-    IGpassword=your_instagram_password
+    # Учетные данные Instagram
+    IGusername=ваше_имя_пользователя_instagram
+    IGpassword=ваш_пароль_instagram
 
-    # Twitter credentials
-    Xusername=your_twitter_username
-    Xpassword=your_twitter_password
+    # Учетные данные Twitter
+    Xusername=ваше_имя_пользователя_twitter
+    Xpassword=ваш_пароль_twitter
 
     ```
 
-## Usage
+## Использование
 
-1. **Run the agent**:
+1. **Запуск агента**:
     ```sh
     npm start
     ```
 
-<!-- 2. **Run the Twitter agent** (Coming soon):
+<!-- 2. **Запуск агента Twitter** (Скоро):
     ```sh
     npm run start:twitter
     ```
 
-3. **Run the GitHub agent** (Coming soon):
+3. **Запуск агента GitHub** (Скоро):
     ```sh
     npm run start:github
     ``` -->
 
-## Project Structure
+## Структура проекта
 
-- **src/client**: Contains the main logic for interacting with social media platforms.
-- **src/config**: Configuration files, including the logger setup.
-- **src/utils**: Utility functions for handling errors, cookies, etc.
-- **src/schema**: Schema definitions for AI-generated content.
+- **src/client**: Содержит основную логику для взаимодействия с платформами социальных сетей.
+- **src/config**: Конфигурационные файлы, включая настройку логгера.
+- **src/utils**: Утилитарные функции для обработки ошибок, cookies и т.д.
+- **src/schema**: Определения схем для контента, генерируемого ИИ.
 
-## Logging
+## Логирование
 
-The project uses a custom logger to log information, warnings, and errors. Logs are saved in the [logs](http://_vscodecontentref_/3) directory.
+Проект использует пользовательский логгер для записи информации, предупреждений и ошибок. Логи сохраняются в директории `logs`.
 
-## Error Handling
+## Обработка ошибок
 
-Process-level error handlers are set up to catch unhandled promise rejections, uncaught exceptions, and process warnings. Errors are logged using the custom logger.
+Настроены обработчики ошибок процессного уровня для перехвата необработанных отклонений промисов, непойманных исключений и предупреждений процесса. Ошибки записываются с использованием пользовательского логгера.
 
-## Contributing
+## Вклад в проект
 
-Contributions are welcome! Please fork the repository and submit a pull request with your changes.
+Приглашаем к сотрудничеству! Пожалуйста, форкните репозиторий и отправьте пул-реквест с вашими изменениями.
 
-## License
+## Лицензия
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+Этот проект лицензирован под лицензией MIT. Смотрите файл LICENSE для получения деталей.
 
-## Acknowledgements
+## Благодарности
 
-- [Google Generative AI](https://ai.google/tools/) for providing the AI models.
-- [Puppeteer](https://github.com/puppeteer/puppeteer) for browser automation.
-- [puppeteer-extra](https://github.com/berstend/puppeteer-extra) for additional plugins and enhancements.
+- [Google Generative AI](https://ai.google/tools/) за предоставление моделей ИИ.
+- [Puppeteer](https://github.com/puppeteer/puppeteer) за автоматизацию браузера.
+- [puppeteer-extra](https://github.com/berstend/puppeteer-extra) за дополнительные плагины и улучшения.
+
+---
+
+### Особенности русской версии
+
+Наш форк проекта включает в себя следующие улучшения:
+
+- Оптимизированная работа с русскоязычным контентом
+- Улучшенные алгоритмы обработки комментариев
+- Улучшенный механизм нахождения элементов интерфейса Instagram
+- Анализ языка поста и генерация комментариев на соответствующем языке
+- Дополнительные меры для обхода ограничений автоматизации
 
 ---
 

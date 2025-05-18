@@ -166,7 +166,36 @@ async function interactWithPosts(page: any) {
             const commentBox = await page.$(commentBoxSelector);
             if (commentBox) {
                 console.log(`Commenting on post ${postIndex}...`);
-                const prompt = `Craft a thoughtful, engaging, and mature reply to the following post: "${caption}". Ensure the reply is relevant, insightful, and adds value to the conversation. It should reflect empathy and professionalism, and avoid sounding too casual or superficial. also it should be 300 characters or less. and it should not go against instagram Community Standards on spam. so you will have to try your best to humanize the reply`;
+                // Анализируем язык поста для генерации комментария на том же языке
+                const detectLanguage = (text: string): string => {
+                    const russianPattern = /[А-Яа-яЁё]/;
+                    
+                    if (russianPattern.test(text)) {
+                        return 'ru';
+                    }
+                    
+                    // Можно добавить проверку других языков при необходимости
+                    return 'en'; // По умолчанию английский
+                };
+                
+                const postLanguage = detectLanguage(caption);
+                let promptTemplate = '';
+                
+                if (postLanguage === 'ru') {
+                    promptTemplate = `Напиши вдумчивый, интересный и зрелый ответ на следующий пост: "${caption}". 
+                    Убедись, что ответ актуален, содержателен и добавляет ценность беседе. 
+                    Он должен отражать эмпатию и профессионализм, избегая слишком casual или поверхностного тона. 
+                    Ответ должен быть не более 300 символов и не нарушать стандарты сообщества Instagram относительно спама. 
+                    Постарайся сделать ответ максимально похожим на естественный человеческий комментарий на русском языке.`;
+                } else {
+                    promptTemplate = `Craft a thoughtful, engaging, and mature reply to the following post: "${caption}". 
+                    Ensure the reply is relevant, insightful, and adds value to the conversation. 
+                    It should reflect empathy and professionalism, and avoid sounding too casual or superficial. 
+                    The reply should be 300 characters or less and not go against Instagram Community Standards on spam. 
+                    Try your best to humanize the reply and make it sound natural.`;
+                }
+                
+                const prompt = promptTemplate;
                 const schema = getInstagramCommentSchema();
                 // Получаем комментарий от искусственного интеллекта
                 let commentResult = await runAgent(schema, prompt);
