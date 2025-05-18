@@ -161,10 +161,13 @@ async function interactWithPosts(page: any) {
                 caption = expandedCaption; // Update caption with expanded content
             }
 
-            // Comment on the post
-            const commentBoxSelector = `${postSelector} textarea`;
-            const commentBox = await page.$(commentBoxSelector);
-            if (commentBox) {
+            // Comment on the post only if there is enough caption text (at least 100 characters)
+            if (!caption || caption.trim() === '' || caption.trim().length < 100) {
+                console.log(`Skipping comment for post ${postIndex} because caption text is too short (${caption ? caption.trim().length : 0} chars, need at least 100)`);
+            } else {
+                const commentBoxSelector = `${postSelector} textarea`;
+                const commentBox = await page.$(commentBoxSelector);
+                if (commentBox) {
                 console.log(`Commenting on post ${postIndex}...`);
                 // Анализируем язык поста для генерации комментария на том же языке
                 const detectLanguage = (text: string): string => {
@@ -343,6 +346,7 @@ async function interactWithPosts(page: any) {
             } else {
                 console.log("Comment box not found.");
             }
+        } // Закрываем блок для проверки наличия текста в посте
 
             // Wait before moving to the next post (randomize between 5 and 10 seconds)
             const delay = Math.floor(Math.random() * 5000) + 5000; // Random delay between 5 and 10 seconds
