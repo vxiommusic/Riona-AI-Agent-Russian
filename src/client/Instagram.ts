@@ -151,7 +151,7 @@ async function interactWithPosts(page: any) {
             if (moreLink) {
                 console.log(`Expanding caption for post ${postIndex}...`);
                 await moreLink.click(); // Click the '...more' link to expand the caption
-                await page.waitForTimeout(1000); // Wait for the caption to expand
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for the caption to expand
                 const expandedCaption = await captionElement.evaluate(
                     (el: HTMLElement) => el.innerText
                 );
@@ -168,17 +168,147 @@ async function interactWithPosts(page: any) {
                 console.log(`Commenting on post ${postIndex}...`);
                 const prompt = `Craft a thoughtful, engaging, and mature reply to the following post: "${caption}". Ensure the reply is relevant, insightful, and adds value to the conversation. It should reflect empathy and professionalism, and avoid sounding too casual or superficial. also it should be 300 characters or less. and it should not go against instagram Community Standards on spam. so you will have to try your best to humanize the reply`;
                 const schema = getInstagramCommentSchema();
-                const comment = await runAgent(schema, prompt); // Pass the updated caption
-                await commentBox.type(comment); // Replace with random comment
+                // Получаем комментарий от искусственного интеллекта
+                let commentResult = await runAgent(schema, prompt);
+                
+                // Проверяем тип возвращаемого значения и обрабатываем его
+                let comment = "";
+                
+                try {
+                    if (typeof commentResult === 'string') {
+                        // Проверяем, не является ли строка JSON
+                        if (commentResult.trim().startsWith('{') || commentResult.trim().startsWith('[')) {
+                            try {
+                                const jsonData = JSON.parse(commentResult);
+                                
+                                // Извлекаем комментарий из разных возможных структур JSON
+                                if (Array.isArray(jsonData) && jsonData.length > 0) {
+                                    const firstItem = jsonData[0];
+                                    comment = firstItem.comment || firstItem.text || firstItem.content || firstItem.message || '';
+                                } else if (jsonData && typeof jsonData === 'object') {
+                                    comment = jsonData.comment || jsonData.text || jsonData.content || jsonData.message || '';
+                                }
+                            } catch (jsonError) {
+                                // Если не удалось разобрать как JSON, используем строку как есть
+                                comment = commentResult;
+                            }
+                        } else {
+                            // Не JSON строка, используем как есть
+                            comment = commentResult;
+                        }
+                    } else if (commentResult && typeof commentResult === 'object') {
+                        // Объект, пытаемся извлечь комментарий
+                        if (Array.isArray(commentResult) && commentResult.length > 0) {
+                            const firstItem = commentResult[0];
+                            comment = firstItem.comment || firstItem.text || firstItem.content || firstItem.message || '';
+                        } else {
+                            comment = commentResult.comment || commentResult.text || commentResult.content || commentResult.message || '';
+                        }
+                        
+                        // Если не удалось извлечь комментарий из объекта, преобразуем в строку
+                        if (!comment) {
+                            comment = JSON.stringify(commentResult);
+                        }
+                    } else {
+                        // Другой тип, преобразуем в строку
+                        comment = String(commentResult || '');
+                    }
+                } catch (extractError) {
+                    console.error('Error extracting comment:', extractError);
+                    comment = '';
+                }
+                
+                // Если ничего не получилось, используем стандартный комментарий
+                if (!comment || comment.trim() === '') {
+                    comment = "Great post! Really enjoyed this content!"
+                }
+                
+                // Убираем потенциально проблемные символы из комментария
+                comment = comment.replace(/[^\x20-\x7E\s]/g, ''); // Оставляем только безопасные ASCII символы
+                comment = comment.substring(0, 200); // Ограничиваем длину комментария
+                console.log(`Generated comment: ${comment}`);
+                try {
+                    // Вводим текст комментария посимвольно с задержкой для имитации человеческого ввода
+                    for (const char of comment) {
+                        await commentBox.type(char);
+                        await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 50) + 10));
+                    }
+                } catch (error: unknown) {
+                    if (error instanceof Error) {
+                        console.error(`Error typing comment: ${error.message}`);
+                    } else {
+                        console.error(`Error typing comment: ${String(error)}`);
+                    }
+                    
+                    // Альтернативный способ ввода комментария, если основной не сработал
+                    try {
+                        await page.evaluate((selector: string, text: string) => {
+                            const element = document.querySelector(selector);
+                            if (element) {
+                                (element as HTMLInputElement).value = text;
+                            }
+                        }, commentBoxSelector, comment);
+                    } catch (evalError: unknown) {
+                        if (evalError instanceof Error) {
+                            console.error(`Failed alternative method: ${evalError.message}`);
+                        } else {
+                            console.error(`Failed alternative method: ${String(evalError)}`);
+                        }
+                    }
+                }
 
-                const postButtonSelector = `${postSelector} div[role="button"]:not([disabled]):has-text("Post")`;
-                const postButton = await page.$(postButtonSelector);
-                if (postButton) {
-                    console.log(`Posting comment on post ${postIndex}...`);
-                    await postButton.click();
-                    console.log(`Comment posted on post ${postIndex}.`);
-                } else {
-                    console.log("Post button not found.");
+                // Более надежный способ поиска кнопки публикации
+                console.log(`Looking for the post button...`);
+                
+                // Ищем по атрибутам вместо текста (более стабильно)
+                let postButton = null;
+                try {
+                    // Пробуем найти кнопку по нескольким возможным селекторам
+                    const possibleButtonSelectors = [
+                        `${postSelector} button[type="submit"]`,
+                        `${postSelector} div[role="button"]`,
+                        `${postSelector} div.x9f619 button`,
+                        `${postSelector} div[data-visualcompletion="ignore-dynamic"] button`
+                    ];
+                    
+                    for (const selector of possibleButtonSelectors) {
+                        const button = await page.$(selector);
+                        if (button) {
+                            // Дополнительная проверка, что это кнопка публикации
+                            const isEnabled = await button.evaluate((el: Element) => {
+                                return !el.hasAttribute('disabled') && 
+                                    (el.textContent?.includes('Post') || 
+                                     el.textContent?.includes('Опубликовать') ||
+                                     el.getAttribute('aria-label')?.includes('Post') ||
+                                     el.getAttribute('aria-label')?.includes('Comment'));
+                            });
+                            
+                            if (isEnabled) {
+                                postButton = button;
+                                console.log(`Found post button with selector: ${selector}`);
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (postButton) {
+                        console.log(`Posting comment on post ${postIndex}...`);
+                        await postButton.click();
+                        console.log(`Comment posted on post ${postIndex}.`);
+                        // Ждем немного после публикации комментария
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    } else {
+                        console.log("Post button not found after trying all selectors.");
+                        // Попробуем отправить комментарий через нажатие Enter
+                        await commentBox.press('Enter');
+                        console.log(`Tried posting comment using Enter key.`);
+                    }
+                } catch (btnError: unknown) {
+                    if (btnError instanceof Error) {
+                        console.error(`Error finding post button: ${btnError.message}`);
+                    } else {
+                        console.error(`Error finding post button: ${String(btnError)}`);
+                    }
                 }
             } else {
                 console.log("Comment box not found.");
@@ -189,7 +319,7 @@ async function interactWithPosts(page: any) {
             console.log(
                 `Waiting ${delay / 1000} seconds before moving to the next post...`
             );
-            await page.waitForTimeout(delay);
+            await new Promise(resolve => setTimeout(resolve, delay));
 
             // Scroll to the next post
             await page.evaluate(() => {
